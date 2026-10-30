@@ -124,6 +124,17 @@ function applyMove(position, index, side) {
       neighbor.count += 1;
       affected.add(neighborIndex);
 
+      const winner = getWinner(nextBoard);
+      if (winner) {
+        return {
+          board: nextBoard,
+          explosions,
+          capturedStones,
+          affectedCells: [...affected],
+          winner,
+        };
+      }
+
       if (neighbor.count >= getNeighbors(neighborIndex).length) {
         queue.push(neighborIndex);
       }
@@ -139,6 +150,7 @@ function applyMove(position, index, side) {
     explosions,
     capturedStones,
     affectedCells: [...affected],
+    winner: getWinner(nextBoard),
   };
 }
 
@@ -413,7 +425,7 @@ function playBotTurn() {
   try {
     move = chooseBotMove(board);
   } catch (error) {
-    finishMatch(HUMAN, error.message);
+    finishMatch(null, error.message);
     return;
   }
 
@@ -461,6 +473,7 @@ function resolveMove(index, side) {
     result = applyMove(board, index, side);
   } catch (error) {
     setStatus(error.message, "alert");
+    finishMatch(null, "Die Runde wurde beendet, ohne einen Sieger festzustellen.");
     return;
   }
 
@@ -481,7 +494,7 @@ function resolveMove(index, side) {
 
   setStatus(`${actor}.${reactionText || " Stein gesetzt."}`, result.capturedStones > 0 ? "success" : "");
 
-  const winner = getWinner(board);
+  const winner = result.winner || getWinner(board);
   if (winner) {
     render();
     finishMatch(winner);
@@ -597,25 +610,32 @@ function finishMatch(winner, extraMessage = "") {
   window.clearInterval(gameTimer);
   updateGameTime();
 
+  const isDraw = winner === null;
   const humanWon = winner === HUMAN;
   const ownStones = countStones(board, HUMAN);
   const botStones = countStones(board, BOT);
   const points = ownStones + moveCount;
-  const result = humanWon ? "Sieg" : "Niederlage";
+  const result = isDraw ? "Unentschieden" : humanWon ? "Sieg" : "Niederlage";
   const elapsed = formatTime(Math.floor((performance.now() - gameStartedAt) / 1000));
 
-  resultTitle.textContent = humanWon ? "Du hast gewonnen!" : "Der Bot gewinnt diese Runde.";
+  resultTitle.textContent = isDraw
+    ? "Kettenreaktion ohne Sieger"
+    : humanWon
+      ? "Du hast gewonnen!"
+      : "Der Bot gewinnt diese Runde.";
   const moveWord = moveCount === 1 ? "Zug" : "Züge";
   resultSummary.textContent = `${extraMessage ? `${extraMessage} ` : ""}Auf dem Feld: ${ownStones} deiner Steine und ${botStones} Bot-Steine. ${moveCount} ${moveWord} in ${elapsed}.`;
-  resultPoints.textContent = String(points);
+  resultPoints.textContent = isDraw ? "–" : String(points);
 
-  saveHighscore({
-    points,
-    ownStones,
-    moves: moveCount,
-    result,
-    date: new Intl.DateTimeFormat("de-DE", { dateStyle: "short" }).format(new Date()),
-  });
+  if (!isDraw) {
+    saveHighscore({
+      points,
+      ownStones,
+      moves: moveCount,
+      result,
+      date: new Intl.DateTimeFormat("de-DE", { dateStyle: "short" }).format(new Date()),
+    });
+  }
 
   render();
 }

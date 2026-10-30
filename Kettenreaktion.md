@@ -22,7 +22,7 @@ Beschreibe eine typische Runde in wenigen Schritten:
 #### Regeln und Punkte
 
 - **Startsteine:** Jede Seite startet mit drei Steinen gemeinsam auf einem Feld. Die Startfelder und wer beginnt, werden vor der Runde festgelegt. Danach ist der Steinvorrat unbegrenzt.
-- **Kritische Grenze:** In den inneren 3x3 Feldern liegt sie bei 4, in den Ecken bei 2 und an den übrigen Randfeldern bei 3. Erreicht ein Feld seine kritische Grenze, wird es geleert und je ein Stein wird waagerecht oder senkrecht auf ein angrenzendes Feld verteilt. Diagonale Felder zählen nicht als Nachbarn.
+- **Kritische Grenze:** In den inneren 3x3 Feldern liegt sie bei 4, in den Ecken bei 2 und an den übrigen Randfeldern bei 3. Erreicht ein Feld seine kritische Grenze, wird es geleert und je ein Stein wird waagerecht oder senkrecht auf ein angrenzendes Feld verteilt. Diagonale Felder zählen nicht als Nachbarn. Sobald eine Seite keine Steine mehr hat, endet die laufende Kettenreaktion sofort; weitere ausstehende Explosionen werden nicht mehr ausgeführt.
 - **Erobern:** Landet die eigene Farbe auf einem gegnerischen Stapel, wird der ganze Stapel erobert.
 - **Punkte oder Rekord:** Der Endpunktestand ist die Anzahl der eigenen Steine am Spielende plus die Anzahl aller Züge im Spiel. Ein höherer Punktestand ist besser.
 - **Gewinnen / Verlieren:** Eine Seite gewinnt, wenn die andere keine Steine ihrer Farbe mehr auf dem Spielfeld hat.
@@ -69,6 +69,7 @@ Beschreibe eine typische Runde in wenigen Schritten:
 - [x] Steuerung funktioniert mit den vorgesehenen Eingabemethoden.
 - [x] Darstellung funktioniert auf Handy und Desktop.
 - [x] Punkte und Spielende verhalten sich wie im Konzept beschrieben.
+- [x] Kettenreaktionen enden sofort, sobald ein Spieler gewonnen hat.
 
 #### Offene Fragen und Entscheidungen
 
@@ -76,4 +77,4 @@ Beschreibe eine typische Runde in wenigen Schritten:
 
 #### Änderungsverlauf
 
-- 2026-10-30: Konzept erstellt, Regeln und Highscore-Formel konkretisiert und den ersten spielbaren Entwurf umgesetzt.
+- 2026-10-30: Konzept erstellt, Regeln und Highscore-Formel konkretisiert, den ersten spielbaren Entwurf umgesetzt und den sofortigen Stopp bei einem Sieg ergänzt.
