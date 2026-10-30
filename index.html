@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#10120f">
+    <meta
+      name="description"
+      content="Entdecke kleine Spiele für zwischendurch auf Pixelpause."
+    >
+    <title>Pixelpause – kleine Spiele, große Pause</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#" aria-label="Pixelpause Startseite">
+        <span class="brand-mark" aria-hidden="true">P</span>
+        <span>pixel<span class="brand-accent">pause</span></span>
+      </a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a class="nav-link nav-link-active" href="#spiele">Spiele</a>
+        <a class="nav-link" href="#highscores">Highscores</a>
+        <a class="nav-link" href="#ueber">Über uns</a>
+      </nav>
+      <a class="header-cta" href="#spiele">
+        Losspielen <span aria-hidden="true">↗</span>
+      </a>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="status-dot"></span> DEINE KLEINE SPIELEPAUSE</p>
+          <h1 id="hero-title">Kurz mal weg.<br><span>Ganz bei dir.</span></h1>
+          <p class="hero-description">
+            Kleine Spiele für große Pausen. Einfach aussuchen, losspielen und
+            den Alltag kurz auf Pause setzen.
+          </p>
+          <a class="button button-primary hero-button" href="#spiele">
+            Spiele entdecken <span aria-hidden="true">↓</span>
+          </a>
+          <div class="hero-note">
+            <span class="note-icon" aria-hidden="true">✦</span>
+            Kostenlos spielen. Einfach im Browser.
+          </div>
+        </div>
+
+        <div class="hero-art" aria-label="Illustration aus bunten Spielsteinen">
+          <div class="art-glow"></div>
+          <div class="art-label"><span></span> SPIEL DES TAGES</div>
+          <div class="float-star star-one" aria-hidden="true">✳</div>
+          <div class="float-star star-two" aria-hidden="true">✦</div>
+          <div class="float-star star-three" aria-hidden="true">✳</div>
+          <div class="tile tile-lilac" aria-hidden="true">✦</div>
+          <div class="tile tile-coral" aria-hidden="true"></div>
+          <div class="tile tile-yellow" aria-hidden="true">↗</div>
+          <div class="tile tile-green" aria-hidden="true"></div>
+          <div class="hero-art-caption">
+            <span>Dein nächster<br>Lieblingsmoment.</span>
+            <span class="caption-arrow" aria-hidden="true">↗</span>
+          </div>
+          <div class="art-orbit orbit-one"></div>
+          <div class="art-orbit orbit-two"></div>
+        </div>
+        <div class="hero-index" aria-hidden="true">01 <span>/</span> 03</div>
+      </section>
+
+      <section class="games-section section-wrap" id="spiele" aria-labelledby="games-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">FINDE DEINEN FLOW</p>
+            <h2 id="games-title">Was spielen wir?</h2>
+          </div>
+          <p class="section-aside">Ein Klick trennt dich<br>vom Spielspaß <span aria-hidden="true">↙</span></p>
+        </div>
+
+        <div class="game-tools">
+          <div class="filter-list" role="group" aria-label="Spiele nach Kategorie filtern">
+            <button class="filter-chip is-active" type="button" data-filter="alle" aria-pressed="true">Alle Spiele <span>03</span></button>
+            <button class="filter-chip" type="button" data-filter="aktion" aria-pressed="false">Aktion</button>
+            <button class="filter-chip" type="button" data-filter="denken" aria-pressed="false">Denken</button>
+            <button class="filter-chip" type="button" data-filter="arcade" aria-pressed="false">Arcade</button>
+          </div>
+          <label class="search-box">
+            <span class="sr-only">Spiele suchen</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="10.8" cy="10.8" r="6.8"></circle>
+              <path d="m16 16 4.2 4.2"></path>
+            </svg>
+            <input id="game-search" type="search" placeholder="Spiel suchen..." autocomplete="off">
+            <kbd>/</kbd>
+          </label>
+        </div>
+
+        <p class="sr-only" id="filter-status" aria-live="polite"></p>
+        <div class="game-grid" id="game-grid">
+          <article class="game-card" data-category="aktion" data-search="reaktions blitz reaktion schnell klicken">
+            <div class="card-art card-art-reaction">
+              <span class="card-tag"><span></span> JETZT SPIELBAR</span>
+              <div class="reaction-art" aria-hidden="true">
+                <span class="reaction-ring ring-outer"></span>
+                <span class="reaction-ring ring-inner"></span>
+                <span class="reaction-core">!</span>
+              </div>
+              <span class="art-number">01</span>
+            </div>
+            <div class="card-content">
+              <div class="card-meta"><span>AKTION</span><span>↗ 1 MIN</span></div>
+              <h3>Reaktions-Blitz</h3>
+              <p>Warte auf das Signal. Dann zeig, wie schnell du bist.</p>
+              <button class="card-play" type="button" data-open-game>
+                Jetzt spielen <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="denken" data-search="memory merken paare gedächtnis">
+            <div class="card-art card-art-memory">
+              <span class="card-tag tag-coming">BALD VERFÜGBAR</span>
+              <div class="memory-art" aria-hidden="true">
+                <span class="memory-tile memory-one">✦</span>
+                <span class="memory-tile memory-two">?</span>
+                <span class="memory-tile memory-three">?</span>
+                <span class="memory-tile memory-four">✦</span>
+              </div>
+              <span class="art-number">02</span>
+            </div>
+            <div class="card-content">
+              <div class="card-meta"><span>DENKEN</span><span>↗ 3 MIN</span></div>
+              <h3>Pixel-Paare</h3>
+              <p>Finde zusammengehörige Karten. Wie gut ist dein Gedächtnis?</p>
+              <span class="card-play card-play-disabled">Kommt bald <span aria-hidden="true">↗</span></span>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="arcade" data-search="pixel runner arcade laufen springen">
+            <div class="card-art card-art-runner">
+              <span class="card-tag tag-coming">BALD VERFÜGBAR</span>
+              <div class="runner-art" aria-hidden="true">
+                <span class="runner-sun"></span>
+                <span class="runner-ground"></span>
+                <span class="runner-block"></span>
+                <span class="runner-player"><i></i></span>
+              </div>
+              <span class="art-number">03</span>
+            </div>
+            <div class="card-content">
+              <div class="card-meta"><span>ARCADE</span><span>↗ 2 MIN</span></div>
+              <h3>Pixel-Runner</h3>
+              <p>Ein Sprung, noch ein Sprung – wie weit schaffst du es?</p>
+              <span class="card-play card-play-disabled">Kommt bald <span aria-hidden="true">↗</span></span>
+            </div>
+          </article>
+        </div>
+        <p class="empty-state" id="empty-state" hidden>Kein Spiel gefunden. Versuch einen anderen Suchbegriff.</p>
+      </section>
+
+      <section class="score-section" id="highscores" aria-labelledby="score-title">
+        <div class="score-inner">
+          <div class="score-icon" aria-hidden="true">↗</div>
+          <div class="score-copy">
+            <p class="eyebrow">DEIN MOMENT, DEIN REKORD</p>
+            <h2 id="score-title">Wie schnell bist du?</h2>
+            <p>Deine beste Reaktionszeit in dieser Runde erscheint hier.</p>
+          </div>
+          <div class="score-display">
+            <span class="score-value" id="best-score">--</span>
+            <span class="score-unit">MILLISEKUNDEN</span>
+          </div>
+          <button class="button button-light" type="button" data-open-game>
+            Herausforderung starten <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="about-section section-wrap" id="ueber" aria-labelledby="about-title">
+        <p class="eyebrow">KLEINE PAUSE. GUTES GEFÜHL.</p>
+        <h2 id="about-title">Gemacht für zwischendurch.<br><span>Und für ein bisschen länger.</span></h2>
+        <p>Pixelpause ist deine kleine Spielecke im Browser – unkompliziert, kostenlos und immer bereit, wenn du eine Pause brauchst.</p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand footer-brand" href="#" aria-label="Pixelpause Startseite">
+        <span class="brand-mark" aria-hidden="true">P</span>
+        <span>pixel<span class="brand-accent">pause</span></span>
+      </a>
+      <span class="footer-note">Ein kleines Spiel ist immer drin. <span aria-hidden="true">✳</span></span>
+      <span class="footer-copy">© 2026 Pixelpause · Ein erster Entwurf</span>
+    </footer>
+
+    <dialog class="game-dialog" id="game-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-shell">
+        <div class="dialog-header">
+          <a class="brand" href="#" aria-label="Pixelpause">
+            <span class="brand-mark" aria-hidden="true">P</span>
+            <span>pixel<span class="brand-accent">pause</span></span>
+          </a>
+          <button class="dialog-close" id="close-game" type="button" aria-label="Spiel schließen">×</button>
+        </div>
+        <div class="dialog-body">
+          <p class="eyebrow"><span class="status-dot"></span> DEIN MINI-SPIEL</p>
+          <h2 id="dialog-title">Reaktions-Blitz</h2>
+          <p class="dialog-description">Warte, bis das Feld grün wird – und klick dann so schnell du kannst.</p>
+          <div class="game-board" id="game-board">
+            <span class="board-decoration board-decoration-one" aria-hidden="true">✳</span>
+            <span class="board-decoration board-decoration-two" aria-hidden="true">✦</span>
+            <div class="game-message" id="game-message" aria-live="polite">
+              <span class="message-symbol" aria-hidden="true">✳</span>
+              <span>Bereit für einen Reflex-Test?</span>
+            </div>
+            <button class="reaction-target" id="reaction-target" type="button" disabled>
+              <span class="sr-only">Jetzt klicken</span>
+              <span aria-hidden="true">KLICK!</span>
+            </button>
+          </div>
+          <div class="game-footer">
+            <span>Dein bester Versuch <strong id="dialog-best">--</strong></span>
+            <button class="button button-primary" id="start-game" type="button">Spiel starten <span aria-hidden="true">→</span></button>
+          </div>
+          <p class="game-hint">Tipp: Zu früh geklickt? Kein Problem, versuch's nochmal.</p>
+        </div>
+      </div>
+    </dialog>
+  </body>
+</html>
