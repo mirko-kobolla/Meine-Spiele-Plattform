@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#10120f">
+    <meta
+      name="description"
+      content="Spiele Kettenreaktion: Erobere das Spielfeld mit cleveren Kettenreaktionen."
+    >
+    <title>Kettenreaktion spielen – Pixelpause</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="styles.css">
+    <script src="kettenreaktion.js" defer></script>
+  </head>
+  <body class="chain-page">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Zur Pixelpause Startseite">
+        <span class="brand-mark" aria-hidden="true">P</span>
+        <span>pixel<span class="brand-accent">pause</span></span>
+      </a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a class="nav-link nav-link-active" href="index.html#spiele">Spiele</a>
+        <a class="nav-link" href="#highscores">Highscores</a>
+      </nav>
+      <a class="header-cta" href="index.html#spiele">
+        Alle Spiele <span aria-hidden="true">↗</span>
+      </a>
+    </header>
+
+    <main class="chain-main">
+      <a class="chain-back" href="index.html#spiele"><span aria-hidden="true">←</span> Zurück zu allen Spielen</a>
+      <div class="chain-heading">
+        <div>
+          <p class="eyebrow"><span class="status-dot"></span> STRATEGIE · 5 × 5 FELDER</p>
+          <h1>Ketten<span>reaktion</span></h1>
+          <p class="chain-intro">Setze deine Steine klug. Eine einzige Kettenreaktion kann das ganze Feld drehen.</p>
+        </div>
+        <div class="chain-player-legend" aria-label="Spielerfarben">
+          <span><i class="legend-dot legend-you"></i> Du</span>
+          <span><i class="legend-dot legend-bot"></i> Bot</span>
+        </div>
+      </div>
+
+      <div class="chain-layout">
+        <section class="chain-game-panel" aria-label="Kettenreaktion-Spiel">
+          <div class="chain-game-top">
+            <div class="chain-turn-label">
+              <span class="turn-indicator" id="turn-indicator"></span>
+              <span id="turn-label">Spiel vorbereiten</span>
+            </div>
+            <div class="chain-stats">
+              <span>Züge <strong id="move-count">0</strong></span>
+              <span>Zeit <strong id="game-time">00:00</strong></span>
+            </div>
+          </div>
+
+          <p class="chain-status" id="chain-status" aria-live="polite">
+            Wähle ein Startfeld in der mittleren 3×3-Zone. Der Bot startet auf einem anderen, nicht angrenzenden Feld.
+          </p>
+
+          <div class="chain-board" id="chain-board" role="group" aria-label="Spielfeld mit 25 Feldern"></div>
+
+          <div class="chain-setup" id="setup-panel">
+            <p class="setup-heading">Vor dem Start</p>
+            <div class="setup-fields">
+              <label>
+                Bot-Stärke
+                <select id="bot-difficulty">
+                  <option value="easy">Einfach</option>
+                  <option value="medium" selected>Mittel</option>
+                  <option value="hard">Schwer</option>
+                </select>
+              </label>
+              <label>
+                Wer beginnt?
+                <select id="first-player">
+                  <option value="human" selected>Ich</option>
+                  <option value="bot">Der Bot</option>
+                </select>
+              </label>
+            </div>
+            <button class="button button-primary chain-start-button" id="start-game" type="button" disabled>
+              Startfeld wählen <span aria-hidden="true">→</span>
+            </button>
+          </div>
+
+          <div class="chain-live-controls" id="live-controls" hidden>
+            <button class="chain-secondary-button" id="new-game" type="button">Neues Spiel</button>
+          </div>
+
+          <div class="chain-result" id="result-panel" hidden>
+            <p class="eyebrow">RUNDE BEENDET</p>
+            <h2 id="result-title">Gut gespielt!</h2>
+            <p class="result-summary" id="result-summary"></p>
+            <div class="result-score">
+              <span>Dein Punktestand</span>
+              <strong id="result-points">0</strong>
+            </div>
+            <div class="result-actions">
+              <button class="button button-primary" id="play-again" type="button">Nochmal spielen <span aria-hidden="true">↻</span></button>
+              <button class="chain-secondary-button" id="change-difficulty" type="button">Schwierigkeit ändern</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="chain-sidebar">
+          <section class="chain-side-card">
+            <p class="eyebrow">SO FUNKTIONIERT'S</p>
+            <h2>Dein Zug. Deine Reaktion.</h2>
+            <ol class="chain-rules">
+              <li><span>1</span><p>Setze einen Stein auf ein leeres oder eigenes Feld.</p></li>
+              <li><span>2</span><p>Ist ein Stapel voll, verteilt er seine Steine nach oben, unten, links und rechts.</p></li>
+              <li><span>3</span><p>Trifft deine Farbe auf einen gegnerischen Stapel, gehört der ganze Stapel dir.</p></li>
+              <li><span>4</span><p>Räume alle gegnerischen Steine vom Feld, um zu gewinnen.</p></li>
+            </ol>
+            <div class="critical-note">
+              <span aria-hidden="true">✳</span>
+              Ecke: 2 Steine · Rand: 3 · Mitte: 4
+            </div>
+          </section>
+
+          <section class="chain-side-card highscore-card" id="highscores">
+            <div class="highscore-heading">
+              <div>
+                <p class="eyebrow">DEINE BESTEN RUNDEN</p>
+                <h2>Highscores</h2>
+              </div>
+              <span class="trophy-icon" aria-hidden="true">↗</span>
+            </div>
+            <p class="highscore-explainer">Punktestand = deine Steine am Ende + alle Züge. Mehr Punkte sind besser.</p>
+            <ol class="highscore-list" id="highscore-list"></ol>
+            <p class="storage-note" id="storage-note">Highscores werden nur auf diesem Gerät gespeichert.</p>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand footer-brand" href="index.html" aria-label="Pixelpause Startseite">
+        <span class="brand-mark" aria-hidden="true">P</span>
+        <span>pixel<span class="brand-accent">pause</span></span>
+      </a>
+      <span class="footer-note">Ein kleines Spiel ist immer drin. <span aria-hidden="true">✳</span></span>
+      <span class="footer-copy">© 2026 Pixelpause · Kettenreaktion</span>
+    </footer>
+  </body>
+</html>
