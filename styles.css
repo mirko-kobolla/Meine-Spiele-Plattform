@@ -1831,7 +1831,9 @@ h3 {
 }
 
 .legend-bot,
-.turn-indicator.is-bot {
+.turn-indicator.is-bot,
+.legend-player-two,
+.turn-indicator.is-player-two {
   background: #ff8178;
   box-shadow: 0 0 10px rgba(255, 129, 120, 0.38);
 }
@@ -1972,6 +1974,7 @@ h3 {
   color: #e4fa9b;
 }
 
+.chain-cell.cell-player-two,
 .chain-cell.cell-bot {
   border-color: #8c4c48;
   background: linear-gradient(145deg, #462b29, #2d211f);

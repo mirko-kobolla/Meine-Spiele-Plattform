@@ -13,6 +13,10 @@ const playAgainButton = document.querySelector("#play-again");
 const changeDifficultyButton = document.querySelector("#change-difficulty");
 const difficultySelect = document.querySelector("#bot-difficulty");
 const firstPlayerSelect = document.querySelector("#first-player");
+const gameModeSelect = document.querySelector("#game-mode");
+const botDifficultyField = document.querySelector("#bot-difficulty-field");
+const legendPlayerOne = document.querySelector("#legend-player-one");
+const legendPlayerTwo = document.querySelector("#legend-player-two");
 const resultTitle = document.querySelector("#result-title");
 const resultSummary = document.querySelector("#result-summary");
 const resultPoints = document.querySelector("#result-points");
@@ -20,15 +24,19 @@ const highscoreList = document.querySelector("#highscore-list");
 const storageNote = document.querySelector("#storage-note");
 
 const STORAGE_KEY = "pixelpause-kettenreaktion-highscores";
-const HUMAN = "human";
+const PLAYER_ONE = "player1";
+const PLAYER_TWO = "player2";
 const BOT = "bot";
+const HUMAN = PLAYER_ONE;
 const SIZE = 5;
 const MAX_EXPLOSIONS_PER_MOVE = 5000;
 
 let board = createEmptyBoard();
 let phase = "setup";
 let selectedStartCell = null;
-let turn = HUMAN;
+let playerOneStartCell = null;
+let setupPlayer = PLAYER_ONE;
+let turn = PLAYER_ONE;
 let moveCount = 0;
 let lastMove = null;
 let highlightedCells = [];
@@ -37,6 +45,7 @@ let gameTimer;
 let botTimer;
 let highlightTimer;
 let highscoreStorageAvailable = true;
+let gameMode = gameModeSelect.value;
 
 function createEmptyBoard() {
   return Array.from({ length: SIZE * SIZE }, () => ({ count: 0, owner: null }));
@@ -76,6 +85,19 @@ function countStones(position, side) {
     (total, cell) => total + (cell.owner === side ? cell.count : 0),
     0,
   );
+}
+
+function getPlayerName(side) {
+  switch (side) {
+    case PLAYER_ONE:
+      return "Spieler 1";
+    case PLAYER_TWO:
+      return "Spieler 2";
+    case BOT:
+      return "Bot";
+    default:
+      return "Spieler";
+  }
 }
 
 function applyMove(position, index, side) {
@@ -159,9 +181,71 @@ function describeCell(cell) {
     return "Leer";
   }
 
-  const ownerName = cell.owner === HUMAN ? "Deine Steine" : "Steine des Bots";
+  const ownerName = cell.owner === PLAYER_ONE
+    ? (gameMode === "local" ? "Steine von Spieler 1" : "Deine Steine")
+    : cell.owner === PLAYER_TWO
+      ? "Steine von Spieler 2"
+      : cell.owner === BOT
+        ? "Steine des Bots"
+        : "Steine";
   const stoneWord = cell.count === 1 ? "Stein" : "Steine";
   return `${cell.count} ${stoneWord}, ${ownerName}`;
+}
+
+function updateLegendLabels() {
+  if (legendPlayerOne) {
+    const label = legendPlayerOne.querySelector("span");
+    if (label) {
+      label.textContent = gameMode === "local" ? "Spieler 1" : "Du";
+    }
+  }
+
+  if (legendPlayerTwo) {
+    const label = legendPlayerTwo.querySelector("span");
+    if (label) {
+      label.textContent = gameMode === "local" ? "Spieler 2" : "Bot";
+    }
+  }
+}
+
+function syncSetupMode() {
+  gameMode = gameModeSelect.value;
+  const isBotMode = gameMode === "bot";
+
+  if (botDifficultyField) {
+    botDifficultyField.hidden = !isBotMode;
+  }
+
+  const playerTwoOption = firstPlayerSelect.querySelector('option[value="player2"]');
+  const botOption = firstPlayerSelect.querySelector('option[value="bot"]');
+
+  if (playerTwoOption) {
+    playerTwoOption.hidden = isBotMode;
+  }
+
+  if (botOption) {
+    botOption.hidden = !isBotMode;
+  }
+
+  if (isBotMode) {
+    if (firstPlayerSelect.value === "player2") {
+      firstPlayerSelect.value = "player1";
+    }
+  } else if (firstPlayerSelect.value === "bot") {
+    firstPlayerSelect.value = "player1";
+  }
+
+  updateLegendLabels();
+}
+
+function isSelectableSetupCell(index) {
+  if (board[index].count > 0 || !isValidStartCell(index)) {
+    return false;
+  }
+
+  return gameMode !== "local" ||
+    setupPlayer !== PLAYER_TWO ||
+    !getNeighbors(playerOneStartCell).includes(index);
 }
 
 function renderBoard() {
@@ -172,7 +256,7 @@ function renderBoard() {
     const cellRow = Math.floor(index / SIZE) + 1;
     const cellColumn = (index % SIZE) + 1;
     const canChooseStart = phase === "setup";
-    const humanCanMove = phase === "playing" && turn === HUMAN;
+    const isPlayableTurn = phase === "playing" && (turn === PLAYER_ONE || turn === PLAYER_TWO);
 
     button.type = "button";
     button.className = "chain-cell";
@@ -185,7 +269,13 @@ function renderBoard() {
     if (cell.count === 0) {
       button.classList.add("is-empty");
     } else {
-      button.classList.add(cell.owner === HUMAN ? "cell-you" : "cell-bot");
+      button.classList.add(
+        cell.owner === PLAYER_ONE
+          ? "cell-you"
+          : cell.owner === PLAYER_TWO
+            ? "cell-player-two"
+            : "cell-bot",
+      );
     }
 
     if (canChooseStart && selectedStartCell === index) {
@@ -201,8 +291,8 @@ function renderBoard() {
     }
 
     button.disabled = canChooseStart
-      ? cell.count > 0 || !isValidStartCell(index)
-      : !humanCanMove || (cell.count > 0 && cell.owner !== HUMAN);
+      ? !isSelectableSetupCell(index)
+      : !isPlayableTurn || (cell.count > 0 && cell.owner !== turn);
 
     if (cell.count > 0) {
       const count = document.createElement("span");
@@ -223,19 +313,31 @@ function setStatus(message, kind = "") {
 }
 
 function updateTurnDisplay() {
-  const labels = {
-    setup: "Startaufstellung",
-    playing: turn === HUMAN ? "Du bist am Zug" : "Der Bot überlegt ...",
-    finished: "Runde beendet",
-  };
+  if (phase === "setup") {
+    turnLabel.textContent = gameMode === "local"
+      ? `${getPlayerName(setupPlayer)} wählt Startfeld`
+      : "Startaufstellung";
+    turnIndicator.className = `turn-indicator ${setupPlayer === PLAYER_TWO ? "is-player-two" : "is-human"}`;
+    moveCountElement.textContent = String(moveCount);
+    return;
+  }
 
-  turnLabel.textContent = labels[phase];
-  turnIndicator.className = "turn-indicator";
+  if (phase === "finished") {
+    turnLabel.textContent = "Runde beendet";
+    turnIndicator.className = "turn-indicator";
+    moveCountElement.textContent = String(moveCount);
+    return;
+  }
 
-  if (phase === "playing") {
-    turnIndicator.classList.add(turn === HUMAN ? "is-human" : "is-bot");
-  } else if (phase === "setup") {
-    turnIndicator.classList.add("is-human");
+  if (turn === PLAYER_ONE) {
+    turnLabel.textContent = gameMode === "local" ? "Spieler 1 ist am Zug" : "Du bist am Zug";
+    turnIndicator.className = "turn-indicator is-human";
+  } else if (turn === PLAYER_TWO) {
+    turnLabel.textContent = "Spieler 2 ist am Zug";
+    turnIndicator.className = "turn-indicator is-player-two";
+  } else {
+    turnLabel.textContent = "Der Bot überlegt ...";
+    turnIndicator.className = "turn-indicator is-bot";
   }
 
   moveCountElement.textContent = String(moveCount);
@@ -275,15 +377,20 @@ function resetToSetup() {
   window.clearTimeout(botTimer);
   window.clearInterval(gameTimer);
   window.clearTimeout(highlightTimer);
+  syncSetupMode();
   board = createEmptyBoard();
   phase = "setup";
   selectedStartCell = null;
-  turn = HUMAN;
+  playerOneStartCell = null;
+  setupPlayer = PLAYER_ONE;
+  turn = PLAYER_ONE;
   moveCount = 0;
   lastMove = null;
   highlightedCells = [];
   gameStartedAt = 0;
-  setStatus("Wähle ein Startfeld in der mittleren 3×3-Zone. Der Bot startet auf einem anderen, nicht angrenzenden Feld.");
+  setStatus(gameMode === "local"
+    ? "Wähle ein Startfeld in der mittleren 3×3-Zone. Spieler 2 startet auf einem anderen, nicht angrenzenden Feld."
+    : "Wähle ein Startfeld in der mittleren 3×3-Zone. Der Bot startet auf einem anderen, nicht angrenzenden Feld.");
   startButton.disabled = true;
   startButton.innerHTML = 'Startfeld wählen <span aria-hidden="true">→</span>';
   render();
@@ -294,19 +401,37 @@ function startMatch() {
     return;
   }
 
-  board = createEmptyBoard();
-  board[selectedStartCell] = { count: 3, owner: HUMAN };
+  if (gameMode === "local" && setupPlayer === PLAYER_ONE) {
+    playerOneStartCell = selectedStartCell;
+    board[playerOneStartCell] = { count: 3, owner: PLAYER_ONE };
+    selectedStartCell = null;
+    setupPlayer = PLAYER_TWO;
+    startButton.disabled = true;
+    startButton.innerHTML = 'Startfeld wählen <span aria-hidden="true">→</span>';
+    setStatus("Spieler 1 hat sein Startfeld gewählt. Spieler 2: Wähle ein freies, nicht angrenzendes Feld in der mittleren 3×3-Zone.");
+    render();
+    return;
+  }
 
-  const availableStarts = board.flatMap((cell, index) => (
-    cell.count === 0 &&
-    isValidStartCell(index) &&
-    !getNeighbors(selectedStartCell).includes(index)
-      ? [index]
-      : []
-  ));
-  const botStartCell = availableStarts[Math.floor(Math.random() * availableStarts.length)];
-  board[botStartCell] = { count: 3, owner: BOT };
-  turn = firstPlayerSelect.value === "bot" ? BOT : HUMAN;
+  if (gameMode === "local") {
+    board[selectedStartCell] = { count: 3, owner: PLAYER_TWO };
+    turn = firstPlayerSelect.value === "player2" ? PLAYER_TWO : PLAYER_ONE;
+  } else {
+    board = createEmptyBoard();
+    board[selectedStartCell] = { count: 3, owner: PLAYER_ONE };
+
+    const availableStarts = board.flatMap((cell, index) => (
+      cell.count === 0 &&
+      isValidStartCell(index) &&
+      !getNeighbors(selectedStartCell).includes(index)
+        ? [index]
+        : []
+    ));
+    const botStartCell = availableStarts[Math.floor(Math.random() * availableStarts.length)];
+    board[botStartCell] = { count: 3, owner: BOT };
+    turn = firstPlayerSelect.value === "bot" ? BOT : PLAYER_ONE;
+  }
+
   phase = "playing";
   moveCount = 0;
   lastMove = null;
@@ -316,8 +441,12 @@ function startMatch() {
   gameTimer = window.setInterval(updateGameTime, 1000);
   startButton.disabled = true;
 
-  if (turn === HUMAN) {
-    setStatus("Du beginnst. Setze einen Stein auf ein leeres oder eigenes Feld.");
+  if (turn === PLAYER_ONE) {
+    setStatus(gameMode === "local"
+      ? "Spieler 1 beginnt. Setze einen Stein auf ein leeres oder eigenes Feld."
+      : "Du beginnst. Setze einen Stein auf ein leeres oder eigenes Feld.");
+  } else if (turn === PLAYER_TWO) {
+    setStatus("Spieler 2 beginnt. Setze einen Stein auf ein leeres oder eigenes Feld.");
   } else {
     setStatus("Der Bot beginnt. Er setzt seinen ersten Stein ...");
   }
@@ -330,20 +459,29 @@ function startMatch() {
 }
 
 function getWinner(position) {
-  const humanStones = countStones(position, HUMAN);
+  if (gameMode === "local") {
+    const playerOneStones = countStones(position, PLAYER_ONE);
+    const playerTwoStones = countStones(position, PLAYER_TWO);
+
+    if (playerOneStones === 0 && playerTwoStones > 0) return PLAYER_TWO;
+    if (playerTwoStones === 0 && playerOneStones > 0) return PLAYER_ONE;
+    return null;
+  }
+
+  const playerOneStones = countStones(position, PLAYER_ONE);
   const botStones = countStones(position, BOT);
 
-  if (humanStones === 0) return BOT;
-  if (botStones === 0) return HUMAN;
+  if (playerOneStones === 0) return BOT;
+  if (botStones === 0) return PLAYER_ONE;
   return null;
 }
 
 function evaluateBoard(position) {
   const winner = getWinner(position);
   if (winner === BOT) return 100000;
-  if (winner === HUMAN) return -100000;
+  if (winner === PLAYER_ONE) return -100000;
 
-  let score = (countStones(position, BOT) - countStones(position, HUMAN)) * 4;
+  let score = (countStones(position, BOT) - countStones(position, PLAYER_ONE)) * 4;
 
   position.forEach((cell, index) => {
     if (cell.count === 0) return;
@@ -376,14 +514,14 @@ function chooseBotMove(position) {
       let score = evaluateBoard(result.board) + result.explosions * 0.3;
 
       if (difficultySelect.value === "hard" && getWinner(result.board) !== BOT) {
-        const humanReplies = getLegalMoves(result.board, HUMAN);
+        const humanReplies = getLegalMoves(result.board, PLAYER_ONE);
 
         if (humanReplies.length > 0) {
           let worstReply = Infinity;
 
           for (const reply of humanReplies) {
             try {
-              const replyResult = applyMove(result.board, reply, HUMAN);
+              const replyResult = applyMove(result.board, reply, PLAYER_ONE);
               worstReply = Math.min(worstReply, evaluateBoard(replyResult.board));
             } catch {
               worstReply = Math.min(worstReply, -100000);
@@ -430,7 +568,7 @@ function playBotTurn() {
   }
 
   if (move === null) {
-    finishMatch(HUMAN, "Der Bot hat kein freies oder eigenes Feld mehr für einen Zug.");
+    finishMatch(PLAYER_ONE, "Der Bot hat kein freies oder eigenes Feld mehr für einen Zug.");
     return;
   }
 
@@ -446,24 +584,26 @@ function handleBoardClick(event) {
   const index = Number(cellButton.dataset.index);
 
   if (phase === "setup") {
-    if (board[index].count > 0) return;
+    if (!isSelectableSetupCell(index)) return;
     selectedStartCell = index;
     startButton.disabled = false;
-    startButton.innerHTML = 'Spiel starten <span aria-hidden="true">→</span>';
-    setStatus(`Startfeld gewählt: Reihe ${Math.floor(index / SIZE) + 1}, Spalte ${(index % SIZE) + 1}.`);
+    startButton.innerHTML = gameMode === "local" && setupPlayer === PLAYER_ONE
+      ? 'Startfeld festlegen <span aria-hidden="true">→</span>'
+      : 'Spiel starten <span aria-hidden="true">→</span>';
+    setStatus(`${gameMode === "local" ? `${getPlayerName(setupPlayer)}: ` : ""}Startfeld gewählt: Reihe ${Math.floor(index / SIZE) + 1}, Spalte ${(index % SIZE) + 1}.`);
     render();
     return;
   }
 
-  if (phase !== "playing" || turn !== HUMAN) {
+  if (phase !== "playing" || (turn !== PLAYER_ONE && turn !== PLAYER_TWO)) {
     return;
   }
 
-  if (board[index].count > 0 && board[index].owner !== HUMAN) {
+  if (board[index].count > 0 && board[index].owner !== turn) {
     return;
   }
 
-  resolveMove(index, HUMAN);
+  resolveMove(index, turn);
 }
 
 function resolveMove(index, side) {
@@ -487,7 +627,11 @@ function resolveMove(index, side) {
     renderBoard();
   }, 550);
 
-  const actor = side === HUMAN ? "Dein Zug" : "Bot-Zug";
+  const actor = side === BOT
+    ? "Bot-Zug"
+    : side === PLAYER_TWO
+      ? "Zug von Spieler 2"
+      : "Zug von Spieler 1";
   const reactionText = result.explosions > 0
     ? ` ${result.explosions} ${result.explosions === 1 ? "Feld" : "Felder"} explodiert${result.explosions === 1 ? "" : "en"}${result.capturedStones > 0 ? `, ${result.capturedStones} gegnerische ${result.capturedStones === 1 ? "Stein wurde" : "Steine wurden"} erobert` : ""}.`
     : "";
@@ -501,10 +645,13 @@ function resolveMove(index, side) {
     return;
   }
 
-  const nextSide = side === HUMAN ? BOT : HUMAN;
+  const nextSide = gameMode === "local"
+    ? (side === PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE)
+    : (side === PLAYER_ONE ? BOT : PLAYER_ONE);
+
   if (getLegalMoves(board, nextSide).length === 0) {
     render();
-    finishMatch(side, `${nextSide === HUMAN ? "Du hast" : "Der Bot hat"} kein freies oder eigenes Feld mehr für einen Zug.`);
+    finishMatch(side, `${getPlayerName(nextSide)} hat kein freies oder eigenes Feld mehr für einen Zug.`);
     return;
   }
 
@@ -514,6 +661,8 @@ function resolveMove(index, side) {
   if (turn === BOT) {
     setStatus(`${reactionText ? `${actor}.${reactionText} ` : ""}Der Bot ist am Zug ...`);
     scheduleBotTurn();
+  } else if (gameMode === "local") {
+    setStatus(`${reactionText ? `${actor}.${reactionText} ` : ""}${getPlayerName(turn)} ist am Zug.`);
   } else if (side === BOT) {
     setStatus(`${reactionText ? `${actor}.${reactionText} ` : ""}Du bist am Zug.`);
   }
@@ -611,19 +760,35 @@ function finishMatch(winner, extraMessage = "") {
   updateGameTime();
 
   const isDraw = winner === null;
-  const humanWon = winner === HUMAN;
-  const ownStones = countStones(board, HUMAN);
+  const elapsed = formatTime(Math.floor((performance.now() - gameStartedAt) / 1000));
+  const moveWord = moveCount === 1 ? "Zug" : "Züge";
+
+  if (gameMode === "local") {
+    const playerOneStones = countStones(board, PLAYER_ONE);
+    const playerTwoStones = countStones(board, PLAYER_TWO);
+
+    resultTitle.textContent = isDraw
+      ? "Kettenreaktion ohne Sieger"
+      : winner === PLAYER_ONE
+        ? "Spieler 1 gewinnt!"
+        : "Spieler 2 gewinnt!";
+    resultSummary.textContent = `${extraMessage ? `${extraMessage} ` : ""}Spieler 1: ${playerOneStones} Steine · Spieler 2: ${playerTwoStones} Steine. ${moveCount} ${moveWord} in ${elapsed}.`;
+    resultPoints.textContent = isDraw ? "–" : `${playerOneStones} : ${playerTwoStones}`;
+    render();
+    return;
+  }
+
+  const humanWon = winner === PLAYER_ONE;
+  const ownStones = countStones(board, PLAYER_ONE);
   const botStones = countStones(board, BOT);
   const points = ownStones + moveCount;
   const result = isDraw ? "Unentschieden" : humanWon ? "Sieg" : "Niederlage";
-  const elapsed = formatTime(Math.floor((performance.now() - gameStartedAt) / 1000));
 
   resultTitle.textContent = isDraw
     ? "Kettenreaktion ohne Sieger"
     : humanWon
       ? "Du hast gewonnen!"
       : "Der Bot gewinnt diese Runde.";
-  const moveWord = moveCount === 1 ? "Zug" : "Züge";
   resultSummary.textContent = `${extraMessage ? `${extraMessage} ` : ""}Auf dem Feld: ${ownStones} deiner Steine und ${botStones} Bot-Steine. ${moveCount} ${moveWord} in ${elapsed}.`;
   resultPoints.textContent = isDraw ? "–" : String(points);
 
@@ -640,6 +805,10 @@ function finishMatch(winner, extraMessage = "") {
   render();
 }
 
+gameModeSelect.addEventListener("change", () => {
+  resetToSetup();
+});
+
 boardElement.addEventListener("click", handleBoardClick);
 startButton.addEventListener("click", startMatch);
 newGameButton.addEventListener("click", resetToSetup);
@@ -650,4 +819,5 @@ changeDifficultyButton.addEventListener("click", () => {
 });
 
 renderHighscores();
+syncSetupMode();
 resetToSetup();

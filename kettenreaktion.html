@@ -42,8 +42,8 @@
           <p class="chain-intro">Setze deine Steine klug. Eine einzige Kettenreaktion kann das ganze Feld drehen.</p>
         </div>
         <div class="chain-player-legend" aria-label="Spielerfarben">
-          <span><i class="legend-dot legend-you"></i> Du</span>
-          <span><i class="legend-dot legend-bot"></i> Bot</span>
+          <span id="legend-player-one"><i class="legend-dot legend-you"></i><span>Du</span></span>
+          <span id="legend-player-two"><i class="legend-dot legend-bot"></i><span>Bot</span></span>
         </div>
       </div>
 
@@ -61,7 +61,7 @@
           </div>
 
           <p class="chain-status" id="chain-status" aria-live="polite">
-            Wähle ein Startfeld in der mittleren 3×3-Zone. Der Bot startet auf einem anderen, nicht angrenzenden Feld.
+            Wähle ein Startfeld in der mittleren 3×3-Zone. Der zweite Spieler startet auf einem anderen, nicht angrenzenden Feld.
           </p>
 
           <div class="chain-board" id="chain-board" role="group" aria-label="Spielfeld mit 25 Feldern"></div>
@@ -70,6 +70,13 @@
             <p class="setup-heading">Vor dem Start</p>
             <div class="setup-fields">
               <label>
+                Spielmodus
+                <select id="game-mode">
+                  <option value="bot" selected>Solo gegen Bot</option>
+                  <option value="local">Zweispieler</option>
+                </select>
+              </label>
+              <label id="bot-difficulty-field">
                 Bot-Stärke
                 <select id="bot-difficulty">
                   <option value="easy">Einfach</option>
@@ -80,8 +87,9 @@
               <label>
                 Wer beginnt?
                 <select id="first-player">
-                  <option value="human" selected>Ich</option>
-                  <option value="bot">Der Bot</option>
+                  <option value="player1" selected>Spieler 1</option>
+                  <option value="player2">Spieler 2</option>
+                  <option value="bot">Bot</option>
                 </select>
               </label>
             </div>
