@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#10120f">
+    <meta name="description" content="Wall Go: Mauern setzen, Gebiete einschließen und taktisch gewinnen.">
+    <title>Wall Go spielen – Pixelpause</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="wallgo.js" defer></script>
+  </head>
+  <body class="wallgo-page">
+    <header class="site-header">
+      <a class="brand" href="Index.html" aria-label="Zur Pixelpause Startseite">
+        <span class="brand-mark" aria-hidden="true">P</span>
+        <span>pixel<span class="brand-accent">pause</span></span>
+      </a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a class="nav-link nav-link-active" href="Index.html#spiele">Spiele</a>
+        <a class="nav-link" href="#wallgo-highscores">Highscores</a>
+      </nav>
+      <a class="header-cta" href="Index.html#spiele">Alle Spiele <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <main class="wallgo-main">
+      <a class="wallgo-back" href="Index.html#spiele"><span aria-hidden="true">←</span> Zurück zu allen Spielen</a>
+      <div class="wallgo-heading">
+        <div>
+          <p class="eyebrow"><span class="status-dot"></span> DENKEN · 7 × 7 FELDER</p>
+          <h1>Wall <span>Go</span></h1>
+          <p>Ziehe deine Figuren und verschließe Kanten. Das größte eigene Gebiet gewinnt.</p>
+        </div>
+        <button class="wallgo-icon-button" id="wallgo-rules-button" type="button" aria-label="Regeln öffnen">?</button>
+      </div>
+
+      <div class="wallgo-layout">
+        <section class="wallgo-game" aria-label="Wall Go Spiel">
+          <div class="wallgo-topbar">
+            <div class="wallgo-turn"><span id="wallgo-turn-dot"></span><strong id="wallgo-turn-label">Spiel vorbereiten</strong></div>
+            <div class="wallgo-walls"><span>Deine Mauern</span><strong id="wallgo-wall-count">20</strong></div>
+          </div>
+
+          <p class="wallgo-status" id="wallgo-status" aria-live="polite">Wähle ein Startfeld für Spieler 1.</p>
+          <div class="wallgo-board-wrap">
+            <div class="wallgo-board" id="wallgo-board" role="group" aria-label="Wall Go Spielfeld"></div>
+          </div>
+
+          <div class="wallgo-setup" id="wallgo-setup">
+            <div class="wallgo-fields">
+              <label>Spielmodus
+                <select id="wallgo-mode">
+                  <option value="bot">Solo gegen Bot</option>
+                  <option value="local">Zweispieler lokal</option>
+                </select>
+              </label>
+              <label id="wallgo-difficulty-field">Bot-Stärke
+                <select id="wallgo-difficulty">
+                  <option value="easy">Einfach</option>
+                  <option value="medium" selected>Mittel</option>
+                  <option value="hard">Schwer</option>
+                </select>
+              </label>
+              <label>Startaufstellung
+                <select id="wallgo-setup-mode">
+                  <option value="fixed">Vorgegeben</option>
+                  <option value="free">Frei setzen</option>
+                </select>
+              </label>
+            </div>
+            <button class="button button-primary wallgo-start" id="wallgo-start" type="button">Spiel starten <span aria-hidden="true">→</span></button>
+          </div>
+
+          <div class="wallgo-actions" id="wallgo-actions" hidden>
+            <button class="wallgo-secondary" id="wallgo-restart" type="button">Neustart</button>
+            <button class="wallgo-secondary" id="wallgo-pause" type="button">Pause</button>
+          </div>
+
+          <div class="wallgo-result" id="wallgo-result" hidden>
+            <p class="eyebrow">AUSWERTUNG</p>
+            <h2 id="wallgo-result-title">Runde beendet</h2>
+            <p id="wallgo-result-summary"></p>
+            <div id="wallgo-score-list" class="wallgo-score-list"></div>
+            <button class="button button-primary" id="wallgo-play-again" type="button">Nochmal spielen <span aria-hidden="true">↻</span></button>
+          </div>
+        </section>
+
+        <aside class="wallgo-sidebar">
+          <section class="wallgo-side-card">
+            <p class="eyebrow">SO SPIELST DU</p>
+            <h2>Ein Zug, zwei Entscheidungen.</h2>
+            <ol class="wallgo-rules">
+              <li><span>1</span><p>Wähle eine eigene Figur.</p></li>
+              <li><span>2</span><p>Ziehe sie bis zu 2 Felder gerade oder um eine Ecke – Mauern und Figuren blockieren.</p></li>
+              <li><span>3</span><p>Setze danach zwingend eine Mauer an einer Kante des Zielfeldes.</p></li>
+              <li><span>4</span><p>Gebiete mit nur einer Farbe bringen am Ende Punkte.</p></li>
+            </ol>
+          </section>
+          <section class="wallgo-side-card wallgo-highscores" id="wallgo-highscores">
+            <div class="wallgo-highscore-heading"><div><p class="eyebrow">DEINE RUNDEN</p><h2>Highscores</h2></div><span>↗</span></div>
+            <ol id="wallgo-highscore-list"></ol>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <dialog class="wallgo-dialog" id="wallgo-rules-dialog">
+      <div class="wallgo-dialog-head"><h2>Wall Go kurz erklärt</h2><button id="wallgo-rules-close" type="button" aria-label="Schließen">×</button></div>
+      <ul>
+        <li>Jede Seite hat 4 Figuren und 20 Mauern.</li>
+        <li>Eine Figur darf 0, 1 oder 2 Schritte waagerecht oder senkrecht gehen. Der 0-Schrittzug bedeutet: auf dem Feld stehen bleiben.</li>
+        <li>Nach dem Zug muss eine freie Kante des Zielfeldes mit einer Mauer geschlossen werden.</li>
+        <li>Der äußere Rand ist bereits geschlossen.</li>
+        <li>Am Ende zählen nur Gebiete, die ausschließlich Figuren einer Partei enthalten.</li>
+        <li>Bei Gleichstand entscheidet das größte zusammenhängende Einzelgebiet.</li>
+      </ul>
+    </dialog>
+
+    <footer class="site-footer">
+      <a class="brand footer-brand" href="Index.html"><span class="brand-mark" aria-hidden="true">P</span><span>pixel<span class="brand-accent">pause</span></span></a>
+      <span class="footer-note">Ein kleines Spiel ist immer drin. <span aria-hidden="true">✳</span></span>
+      <span class="footer-copy">© 2026 Pixelpause · Wall Go</span>
+    </footer>
+  </body>
+</html>
