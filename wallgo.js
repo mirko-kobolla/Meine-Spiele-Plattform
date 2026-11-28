@@ -21,10 +21,17 @@ const rulesButton = document.querySelector("#wallgo-rules-button");
 const rulesDialog = document.querySelector("#wallgo-rules-dialog");
 const rulesCloseButton = document.querySelector("#wallgo-rules-close");
 const highscoreList = document.querySelector("#wallgo-highscore-list");
+const timerElement = document.querySelector("#wallgo-timer");
+const timerValueElement = document.querySelector("#wallgo-timer-value");
+const turnTimeSelect = document.querySelector("#wallgo-turn-time");
+const wallbreakerButton = document.querySelector("#wallgo-wallbreaker");
+const wallbreakerAction = document.querySelector("#wallgo-wallbreaker-action");
 
 const SIZE = 7;
 const PLAYER_ONE = "blue";
 const PLAYER_TWO = "coral";
+const PLAYER_THREE = "gold";
+const PLAYER_FOUR = "green";
 const BOT = "coral";
 const WALL_LIMIT = 20;
 const STORAGE_KEY = "pixelpause-wallgo-highscores";
@@ -48,6 +55,10 @@ let paused = false;
 let setupCount = 0;
 let setupSide = PLAYER_ONE;
 let mode = "bot";
+let playerCount = 2;
+let wallbreakers = {};
+let turnTimer = null;
+let secondsRemaining = 0;
 
 function indexFrom(row, column) {
   return row * SIZE + column;
@@ -89,8 +100,10 @@ function isWall(row, column, direction) {
 }
 
 function getPlayerName(side) {
-  if (side === PLAYER_ONE) return mode === "local" ? "Spieler 1" : "Du";
-  return mode === "local" ? "Spieler 2" : "Bot";
+  if (side === PLAYER_ONE) return mode === "bot" ? "Du" : "Spieler 1";
+  if (side === PLAYER_TWO) return mode === "bot" ? "Bot" : "Spieler 2";
+  if (side === PLAYER_THREE) return "Spieler 3";
+  if (side === PLAYER_FOUR) return "Spieler 4";
 }
 
 function getPiece(index) {
@@ -98,24 +111,46 @@ function getPiece(index) {
 }
 
 function fixedSetup() {
-  pieces = [
-    { side: PLAYER_ONE, index: indexFrom(3, 0) },
-    { side: PLAYER_ONE, index: indexFrom(2, 1) },
-    { side: PLAYER_ONE, index: indexFrom(4, 1) },
-    { side: PLAYER_ONE, index: indexFrom(3, 2) },
-    { side: PLAYER_TWO, index: indexFrom(3, 6) },
-    { side: PLAYER_TWO, index: indexFrom(2, 5) },
-    { side: PLAYER_TWO, index: indexFrom(4, 5) },
-    { side: PLAYER_TWO, index: indexFrom(3, 4) },
+  if (playerCount === 2) {
+    pieces = [
+      { side: PLAYER_ONE, index: indexFrom(3, 0) },
+      { side: PLAYER_ONE, index: indexFrom(2, 1) },
+      { side: PLAYER_ONE, index: indexFrom(4, 1) },
+      { side: PLAYER_ONE, index: indexFrom(3, 2) },
+      { side: PLAYER_TWO, index: indexFrom(3, 6) },
+      { side: PLAYER_TWO, index: indexFrom(2, 5) },
+      { side: PLAYER_TWO, index: indexFrom(4, 5) },
+      { side: PLAYER_TWO, index: indexFrom(3, 4) },
+    ];
+    return;
+  }
+  const sides = [PLAYER_ONE, PLAYER_TWO, PLAYER_THREE, PLAYER_FOUR].slice(0, playerCount);
+  const positions = [
+    [indexFrom(3, 0), indexFrom(3, 2)],
+    [indexFrom(3, 6), indexFrom(3, 4)],
+    [indexFrom(0, 3), indexFrom(2, 3)],
+    [indexFrom(6, 3), indexFrom(4, 3)],
   ];
+  pieces = [];
+  for (let player = 0; player < playerCount; player += 1) {
+    for (const index of positions[player]) pieces.push({ side: sides[player], index });
+  }
 }
 
 function resetSetup() {
   window.clearTimeout(botTimer);
+  window.clearInterval(turnTimer);
   mode = modeSelect.value;
+  playerCount = mode === "bot" || mode === "local2" ? 2 : mode === "local3" ? 3 : 4;
   pieces = [];
   walls = new Set();
-  remainingWalls = { [PLAYER_ONE]: WALL_LIMIT, [PLAYER_TWO]: WALL_LIMIT };
+  remainingWalls = {};
+  wallbreakers = {};
+  const sides = [PLAYER_ONE, PLAYER_TWO, PLAYER_THREE, PLAYER_FOUR].slice(0, playerCount);
+  for (const side of sides) {
+    remainingWalls[side] = playerCount >= 3 ? 25 : WALL_LIMIT;
+    wallbreakers[side] = playerCount >= 3;
+  }
   turn = PLAYER_ONE;
   phase = "setup";
   stage = "select";
@@ -136,7 +171,9 @@ function resetSetup() {
 
   setStatus(setupModeSelect.value === "fixed"
     ? "Vorgegebene Startposition bereit. Mit Spiel starten beginnt die Runde."
-    : "Spieler 1: Setze deine erste Figur auf ein freies Feld.");
+    : `${getPlayerName(PLAYER_ONE)}: Setze deine erste Figur auf ein freies Feld.`);
+  timerElement.hidden = Number(turnTimeSelect.value) === 0;
+  timerValueElement.textContent = turnTimeSelect.value === "0" ? "--" : turnTimeSelect.value;
   render();
 }
 
@@ -185,6 +222,25 @@ function getReachableWithinTwo(startIndex) {
     }
   }
   return reachable;
+}
+
+function isRemovableWall(row, column, direction) {
+  if (direction === "top" && row === 0) return false;
+  if (direction === "bottom" && row === SIZE - 1) return false;
+  if (direction === "left" && column === 0) return false;
+  if (direction === "right" && column === SIZE - 1) return false;
+  return isWall(row, column, direction);
+}
+
+function hasRemovableWall() {
+  for (let row = 0; row < SIZE; row += 1) {
+    for (let column = 0; column < SIZE; column += 1) {
+      for (const [direction] of DIRECTIONS) {
+        if (isRemovableWall(row, column, direction)) return true;
+      }
+    }
+  }
+  return false;
 }
 
 function canPlaceWall(row, column, direction) {
@@ -258,6 +314,18 @@ function renderBoard() {
         }
       }
 
+      if (stage === "break") {
+        for (const [direction] of DIRECTIONS) {
+          if (!isRemovableWall(row, column, direction)) continue;
+          const edge = document.createElement("button");
+          edge.type = "button";
+          edge.className = `wallgo-edge wallgo-removable-edge edge-${direction}`;
+          edge.dataset.direction = direction;
+          edge.setAttribute("aria-label", "Diese Mauer mit Wallbreaker entfernen");
+          cell.append(edge);
+        }
+      }
+
       boardElement.append(cell);
     }
   }
@@ -273,9 +341,22 @@ function updateTurnDisplay() {
     turnLabel.textContent = "Pausiert";
   } else {
     turnLabel.textContent = `${getPlayerName(turn)} ist am Zug`;
-    turnDot.className = turn === PLAYER_ONE ? "is-blue" : "is-coral";
+    turnDot.className = `is-${turn}`;
   }
   wallCountElement.textContent = String(remainingWalls[turn] ?? 0);
+  const canUseWallbreaker = (
+    phase === "playing"
+    && playerCount >= 3
+    && wallbreakers[turn]
+    && (stage === "wall" || stage === "break")
+    && hasRemovableWall()
+    && !paused
+  );
+  wallbreakerAction.hidden = !canUseWallbreaker;
+  wallbreakerButton.textContent = stage === "break"
+    ? "Abbrechen · Mauerbau wählen"
+    : "Mauernbrecher einsetzen · Mauer anklicken";
+  wallbreakerButton.setAttribute("aria-pressed", String(stage === "break"));
 }
 
 function render() {
@@ -288,8 +369,8 @@ function render() {
 
 function startMatch() {
   if (setupModeSelect.value === "free") {
-    if (pieces.length !== 8) {
-      setStatus("Setze zuerst alle 8 Figuren abwechselnd auf das Brett.");
+    if (pieces.length !== playerCount * 2) {
+      setStatus(`Setze zuerst alle ${playerCount * 2} Figuren abwechselnd auf das Brett.`);
       return;
     }
   } else {
@@ -301,7 +382,8 @@ function startMatch() {
   turn = PLAYER_ONE;
   selectedPiece = null;
   validDestinations = new Set();
-  setStatus(mode === "local" ? "Spieler 1 ist am Zug. Wähle eine eigene Figur." : "Du bist am Zug. Wähle eine eigene Figur.");
+  setStatus(mode === "bot" ? "Du bist am Zug. Wähle eine eigene Figur." : "Spieler 1 ist am Zug. Wähle eine eigene Figur.");
+  startTurnTimer();
   render();
 }
 
@@ -311,10 +393,9 @@ function handleSetupClick(index) {
 
   pieces.push({ side: setupSide, index });
   setupCount += 1;
+  const piecesNeeded = playerCount * 2;
 
-  if (setupCount < 4) {
-    setStatus(`Spieler 1: Noch ${4 - setupCount} Figur(en) setzen.`);
-  } else if (setupCount === 4 && mode === "bot") {
+  if (mode === "bot" && setupCount === 4) {
     const freeCells = Array.from({ length: SIZE * SIZE }, (_, cellIndex) => cellIndex)
       .filter((cellIndex) => !getPiece(cellIndex));
     for (let number = 0; number < 4; number += 1) {
@@ -322,12 +403,13 @@ function handleSetupClick(index) {
       const botIndex = freeCells.splice(randomPosition, 1)[0];
       pieces.push({ side: PLAYER_TWO, index: botIndex });
     }
-    setupCount = 8;
+    setupCount = 4;
     setupSide = null;
     setStatus("Alle Figuren stehen. Die Runde kann starten.");
-  } else if (setupCount < 8) {
-    setupSide = PLAYER_TWO;
-    setStatus(`Spieler 2: Noch ${8 - setupCount} Figur(en) setzen.`);
+  } else if (setupCount < piecesNeeded) {
+    const sides = [PLAYER_ONE, PLAYER_TWO, PLAYER_THREE, PLAYER_FOUR].slice(0, playerCount);
+    setupSide = sides[Math.floor(setupCount / 2)];
+    setStatus(`${getPlayerName(setupSide)}: Noch ${piecesNeeded - setupCount} Figur(en) setzen.`);
   } else {
     setupSide = null;
     setStatus("Alle Figuren stehen. Die Runde kann starten.");
@@ -386,11 +468,25 @@ function movePiece(destination) {
   piece.index = destination;
   selectedPiece = destination;
   stage = "wall";
+  if (!DIRECTIONS.some(([direction]) => canPlaceWall(rowFrom(destination), columnFrom(destination), direction))
+    && !(wallbreakers[turn] && hasRemovableWall())) {
+    setStatus("Hier gibt es keine mögliche Maueraktion. Der Zug wird übersprungen.");
+    finishTurnAfterAction();
+    return;
+  }
   setStatus("Wähle jetzt eine freie Mauerkante am Zielfeld.");
   render();
 }
 
 function handleWallSelection(row, column, direction) {
+  if (stage === "break") {
+    if (!paused && isRemovableWall(row, column, direction)) {
+      walls.delete(wallKey(row, column, direction));
+      wallbreakers[turn] = false;
+      finishTurnAfterAction();
+    }
+    return;
+  }
   if (stage !== "wall" || paused) return;
   if (!placeWall(row, column, direction)) return;
 
@@ -400,11 +496,30 @@ function handleWallSelection(row, column, direction) {
   render();
 
   if (checkGameEnd()) return;
-  turn = turn === PLAYER_ONE ? PLAYER_TWO : PLAYER_ONE;
+  advanceTurn();
+}
+
+function getSidesInGame() {
+  return [PLAYER_ONE, PLAYER_TWO, PLAYER_THREE, PLAYER_FOUR].slice(0, playerCount);
+}
+
+function advanceTurn() {
+  const sides = getSidesInGame();
+  turn = sides[(sides.indexOf(turn) + 1) % sides.length];
   setStatus(`${getPlayerName(turn)} ist am Zug. Wähle eine eigene Figur.`);
+  startTurnTimer();
   render();
 
   if (turn === BOT && mode === "bot") scheduleBotTurn();
+}
+
+function finishTurnAfterAction() {
+  stage = "select";
+  selectedPiece = null;
+  validDestinations = new Set();
+  render();
+  if (checkGameEnd()) return;
+  advanceTurn();
 }
 
 function simulateMove(startIndex, destination, side) {
@@ -428,6 +543,50 @@ function simulateMove(startIndex, destination, side) {
 
   turn = oldTurn;
   return { clonedPieces, options };
+}
+
+function startTurnTimer() {
+  window.clearInterval(turnTimer);
+  const configuredSeconds = Number(turnTimeSelect.value);
+  secondsRemaining = configuredSeconds;
+  timerElement.hidden = configuredSeconds === 0;
+  timerValueElement.textContent = configuredSeconds === 0 ? "--" : String(secondsRemaining);
+  timerElement.classList.remove("is-low");
+  if (!configuredSeconds || paused) return;
+
+  turnTimer = window.setInterval(() => {
+    if (phase !== "playing" || paused) return;
+    secondsRemaining -= 1;
+    timerValueElement.textContent = String(Math.max(0, secondsRemaining));
+    timerElement.classList.toggle("is-low", secondsRemaining <= 10);
+    if (secondsRemaining <= 0) handleTurnTimeout();
+  }, 1000);
+}
+
+function handleTurnTimeout() {
+  window.clearInterval(turnTimer);
+  if (phase !== "playing" || paused) return;
+  setStatus(`Die Zeit für ${getPlayerName(turn)} ist abgelaufen.`);
+
+  if (stage === "select") {
+    const piece = pieces.find((item) => item.side === turn);
+    if (piece) {
+      selectedPiece = piece.index;
+      stage = "wall";
+    }
+  } else if (stage === "move") {
+    stage = "wall";
+  }
+
+  if (stage === "wall" && selectedPiece !== null) {
+    const row = rowFrom(selectedPiece);
+    const column = columnFrom(selectedPiece);
+    const directions = DIRECTIONS.map(([direction]) => direction).filter((direction) => canPlaceWall(row, column, direction));
+    if (directions.length) handleWallSelection(row, column, directions[0]);
+    else advanceTurn();
+  } else {
+    advanceTurn();
+  }
 }
 
 function scheduleBotTurn() {
@@ -480,6 +639,7 @@ function playBotTurn() {
   if (checkGameEnd()) return;
   turn = PLAYER_ONE;
   setStatus("Du bist am Zug. Wähle eine eigene Figur.");
+  startTurnTimer();
   render();
 }
 
@@ -526,7 +686,8 @@ function floodRegions() {
 }
 
 function evaluateAreas() {
-  const totals = { [PLAYER_ONE]: 0, [PLAYER_TWO]: 0 };
+  const totals = {};
+  for (const side of getSidesInGame()) totals[side] = 0;
   for (const region of floodRegions()) {
     if (region.owners.size !== 1) continue;
     const owner = [...region.owners][0];
@@ -536,29 +697,33 @@ function evaluateAreas() {
 }
 
 function piecesCanMeet() {
-  const bluePieces = pieces.filter((piece) => piece.side === PLAYER_ONE);
-  const coralPieces = pieces.filter((piece) => piece.side === PLAYER_TWO);
-
-  for (const blue of bluePieces) {
-    const visited = new Set([blue.index]);
-    const queue = [blue.index];
-    while (queue.length) {
-      const current = queue.shift();
-      if (coralPieces.some((piece) => piece.index === current)) return true;
-      const row = rowFrom(current);
-      const column = columnFrom(current);
-      for (const [direction, dr, dc] of DIRECTIONS) {
-        if (isWall(row, column, direction)) continue;
-        const nextRow = row + dr;
-        const nextColumn = column + dc;
-        if (nextRow < 0 || nextRow >= SIZE || nextColumn < 0 || nextColumn >= SIZE) continue;
-        const nextIndex = indexFrom(nextRow, nextColumn);
-        if (!visited.has(nextIndex) && !getPiece(nextIndex)) {
-          visited.add(nextIndex);
-          queue.push(nextIndex);
-        }
-        if (coralPieces.some((piece) => piece.index === nextIndex)) {
-          return true;
+  const sides = getSidesInGame();
+  for (let left = 0; left < sides.length; left += 1) {
+    for (let right = left + 1; right < sides.length; right += 1) {
+      const starts = pieces.filter((piece) => piece.side === sides[left]);
+      const targets = pieces.filter((piece) => piece.side === sides[right]);
+      for (const start of starts) {
+        const visited = new Set([start.index]);
+        const queue = [start.index];
+        while (queue.length) {
+          const current = queue.shift();
+          if (targets.some((piece) => piece.index === current)) return true;
+          const row = rowFrom(current);
+          const column = columnFrom(current);
+          for (const [direction, dr, dc] of DIRECTIONS) {
+            if (isWall(row, column, direction)) continue;
+            const nextRow = row + dr;
+            const nextColumn = column + dc;
+            if (nextRow < 0 || nextRow >= SIZE || nextColumn < 0 || nextColumn >= SIZE) continue;
+            const nextIndex = indexFrom(nextRow, nextColumn);
+            if (!visited.has(nextIndex)) {
+              const occupant = getPiece(nextIndex);
+              if (!occupant || targets.some((piece) => piece.index === nextIndex)) {
+                visited.add(nextIndex);
+                queue.push(nextIndex);
+              }
+            }
+          }
         }
       }
     }
@@ -568,7 +733,7 @@ function piecesCanMeet() {
 
 function checkGameEnd() {
   const isolated = !piecesCanMeet();
-  const wallsEmpty = remainingWalls[PLAYER_ONE] <= 0 && remainingWalls[PLAYER_TWO] <= 0;
+  const wallsEmpty = getSidesInGame().every((side) => remainingWalls[side] <= 0);
   if (isolated || wallsEmpty) {
     finishMatch(isolated ? "Alle Parteien sind vollständig voneinander getrennt." : "Beide Mauervorräte sind aufgebraucht.");
     return true;
@@ -585,33 +750,33 @@ function largestRegionSize(owner) {
 function finishMatch(reason) {
   phase = "finished";
   window.clearTimeout(botTimer);
+  window.clearInterval(turnTimer);
   const areas = evaluateAreas();
-  const blueScore = areas[PLAYER_ONE] || 0;
-  const coralScore = areas[PLAYER_TWO] || 0;
+  const sides = getSidesInGame();
+  const scores = sides.map((side) => ({ side, score: areas[side] || 0, largest: largestRegionSize(side) }));
+  const highestScore = Math.max(...scores.map((entry) => entry.score));
+  const scoreLeaders = scores.filter((entry) => entry.score === highestScore);
   let title;
 
-  if (blueScore === coralScore) {
-    const blueLargest = largestRegionSize(PLAYER_ONE);
-    const coralLargest = largestRegionSize(PLAYER_TWO);
-    if (blueLargest === coralLargest) title = "Unentschieden";
-    else title = blueLargest > coralLargest ? (mode === "local" ? "Spieler 1 gewinnt" : "Du gewinnst!") : (mode === "local" ? "Spieler 2 gewinnt" : "Der Bot gewinnt");
+  if (scoreLeaders.length === 1) {
+    title = `${getPlayerName(scoreLeaders[0].side)} gewinnt`;
   } else {
-    title = blueScore > coralScore
-      ? (mode === "local" ? "Spieler 1 gewinnt" : "Du gewinnst!")
-      : (mode === "local" ? "Spieler 2 gewinnt" : "Der Bot gewinnt");
+    const largestScore = Math.max(...scoreLeaders.map((entry) => entry.largest));
+    const largestLeaders = scoreLeaders.filter((entry) => entry.largest === largestScore);
+    title = largestLeaders.length === 1 ? `${getPlayerName(largestLeaders[0].side)} gewinnt` : "Unentschieden";
   }
 
   resultTitle.textContent = title;
-  resultSummary.textContent = `${reason} ${mode === "local" ? "Spieler 1" : "Du"}: ${blueScore} Punkte · ${mode === "local" ? "Spieler 2" : "Bot"}: ${coralScore} Punkte.`;
+  resultSummary.textContent = `${reason} ${scores.map((entry) => `${getPlayerName(entry.side)}: ${entry.score} Punkte`).join(" · ")}.`;
   scoreList.innerHTML = "";
 
-  for (const [side, score] of [[PLAYER_ONE, blueScore], [PLAYER_TWO, coralScore]]) {
+  for (const entry of scores) {
     const item = document.createElement("div");
-    item.innerHTML = `<span>${getPlayerName(side)}</span><strong>${score}</strong>`;
+    item.innerHTML = `<span>${getPlayerName(entry.side)}</span><strong>${entry.score}</strong>`;
     scoreList.append(item);
   }
 
-  saveHighscore(blueScore);
+  saveHighscore(areas[PLAYER_ONE] || 0);
   render();
 }
 
@@ -654,6 +819,19 @@ boardElement.addEventListener("click", handleBoardClick);
 startButton.addEventListener("click", startMatch);
 restartButton.addEventListener("click", resetSetup);
 playAgainButton.addEventListener("click", resetSetup);
+wallbreakerButton.addEventListener("click", () => {
+  if (phase !== "playing" || paused || playerCount < 3 || !wallbreakers[turn]) return;
+  if (stage === "break") {
+    stage = "wall";
+    setStatus("Wähle eine freie Mauerkante am Zielfeld.");
+    render();
+    return;
+  }
+  if (stage !== "wall" || !hasRemovableWall()) return;
+  stage = "break";
+  setStatus("Mauernbrecher aktiv: Klicke eine bestehende Mauer auf dem Brett an.");
+  render();
+});
 modeSelect.addEventListener("change", () => {
   mode = modeSelect.value;
   difficultyField.hidden = mode !== "bot";
@@ -665,6 +843,8 @@ pauseButton.addEventListener("click", () => {
   pauseButton.textContent = paused ? "Fortsetzen" : "Pause";
   setStatus(paused ? "Die Runde ist pausiert." : `${getPlayerName(turn)} ist am Zug.`);
   render();
+  if (paused) window.clearInterval(turnTimer);
+  else startTurnTimer();
   if (!paused && phase === "playing" && mode === "bot" && turn === BOT) {
     scheduleBotTurn();
   }

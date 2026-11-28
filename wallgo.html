@@ -40,10 +40,16 @@
         <section class="wallgo-game" aria-label="Wall Go Spiel">
           <div class="wallgo-topbar">
             <div class="wallgo-turn"><span id="wallgo-turn-dot"></span><strong id="wallgo-turn-label">Spiel vorbereiten</strong></div>
-            <div class="wallgo-walls"><span>Deine Mauern</span><strong id="wallgo-wall-count">20</strong></div>
+            <div class="wallgo-turn-meta">
+              <div class="wallgo-timer" id="wallgo-timer" hidden><span>Zugzeit</span><strong id="wallgo-timer-value">--</strong></div>
+              <div class="wallgo-walls"><span>Deine Mauern</span><strong id="wallgo-wall-count">20</strong></div>
+            </div>
           </div>
 
           <p class="wallgo-status" id="wallgo-status" aria-live="polite">Wähle ein Startfeld für Spieler 1.</p>
+          <div class="wallgo-wallbreaker-action" id="wallgo-wallbreaker-action" hidden>
+            <button class="wallgo-secondary wallgo-wallbreaker" id="wallgo-wallbreaker" type="button" aria-pressed="false">Mauernbrecher einsetzen · Mauer anklicken</button>
+          </div>
           <div class="wallgo-board-wrap">
             <div class="wallgo-board" id="wallgo-board" role="group" aria-label="Wall Go Spielfeld"></div>
           </div>
@@ -53,7 +59,9 @@
               <label>Spielmodus
                 <select id="wallgo-mode">
                   <option value="bot">Solo gegen Bot</option>
-                  <option value="local">Zweispieler lokal</option>
+                  <option value="local2">Zweispieler lokal</option>
+                  <option value="local3">Dreispieler lokal</option>
+                  <option value="local4">Vier Spieler lokal</option>
                 </select>
               </label>
               <label id="wallgo-difficulty-field">Bot-Stärke
@@ -67,6 +75,13 @@
                 <select id="wallgo-setup-mode">
                   <option value="fixed">Vorgegeben</option>
                   <option value="free">Frei setzen</option>
+                </select>
+              </label>
+              <label>Zug-Timer
+                <select id="wallgo-turn-time">
+                  <option value="0" selected>Deaktiviert</option>
+                  <option value="60">60 Sekunden</option>
+                  <option value="90">90 Sekunden</option>
                 </select>
               </label>
             </div>
@@ -112,6 +127,8 @@
         <li>Jede Seite hat 4 Figuren und 20 Mauern.</li>
         <li>Eine Figur darf 0, 1 oder 2 Schritte waagerecht oder senkrecht gehen. Der 0-Schrittzug bedeutet: auf dem Feld stehen bleiben.</li>
         <li>Nach dem Zug muss eine freie Kante des Zielfeldes mit einer Mauer geschlossen werden.</li>
+        <li>Im 3- und 4-Spieler-Modus hat jede Partei einmal pro Partie den Wallbreaker: Eine bestehende Mauer wird statt einer neuen entfernt.</li>
+        <li>Optional kann ein Zug-Timer mit 60 oder 90 Sekunden pro Zug aktiviert werden.</li>
         <li>Der äußere Rand ist bereits geschlossen.</li>
         <li>Am Ende zählen nur Gebiete, die ausschließlich Figuren einer Partei enthalten.</li>
         <li>Bei Gleichstand entscheidet das größte zusammenhängende Einzelgebiet.</li>

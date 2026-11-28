@@ -2581,6 +2581,29 @@ h3 {
   font-size: 18px;
 }
 
+.wallgo-turn-meta,
+.wallgo-timer {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.wallgo-timer {
+  color: #92958a;
+  font-size: 11px;
+}
+
+.wallgo-timer strong {
+  min-width: 28px;
+  color: #f5f4ed;
+  font-size: 14px;
+  text-align: right;
+}
+
+.wallgo-timer.is-low strong {
+  color: #ff796e;
+}
+
 .wallgo-status {
   min-height: 36px;
   margin: 0 0 10px;
@@ -2590,6 +2613,29 @@ h3 {
   background: #20231d;
   color: #bbbdae;
   font-size: 12px;
+}
+
+.wallgo-wallbreaker-action[hidden] {
+  display: none;
+}
+
+.wallgo-wallbreaker-action {
+  margin: 0 0 10px;
+}
+
+.wallgo-wallbreaker-action .wallgo-wallbreaker {
+  width: 100%;
+  min-height: 38px;
+  background: rgba(242, 201, 76, 0.08);
+  text-align: left;
+}
+
+.wallgo-wallbreaker-action .wallgo-wallbreaker:hover {
+  background: rgba(242, 201, 76, 0.16);
+}
+
+.wallgo-wallbreaker-action .wallgo-wallbreaker[aria-pressed="true"] {
+  background: rgba(242, 201, 76, 0.18);
 }
 
 .wallgo-board-wrap {
@@ -2663,6 +2709,23 @@ h3 {
   transform: rotate(45deg);
 }
 
+.wallgo-piece.piece-gold {
+  border-radius: 10%;
+  background: #f2c94c;
+  color: #5d4810;
+  transform: rotate(45deg);
+}
+
+.wallgo-piece.piece-green {
+  background: #67d391;
+  color: #16452a;
+  border-radius: 50% 50% 50% 12%;
+}
+
+.wallgo-turn > span.is-coral { background: #ff796e; }
+.wallgo-turn > span.is-gold { background: #f2c94c; }
+.wallgo-turn > span.is-green { background: #67d391; }
+
 .wallgo-piece.piece-coral::first-letter {
   transform: rotate(-45deg);
 }
@@ -2718,6 +2781,15 @@ h3 {
   outline: none;
 }
 
+.wallgo-removable-edge {
+  background: rgba(242, 201, 76, 0.18);
+}
+
+.wallgo-removable-edge:hover,
+.wallgo-removable-edge:focus-visible {
+  background: rgba(242, 201, 76, 0.58);
+}
+
 .edge-top {
   top: 0;
   right: 10%;
@@ -2763,7 +2835,7 @@ h3 {
 
 .wallgo-fields {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
@@ -2792,6 +2864,11 @@ h3 {
 
 .wallgo-actions {
   grid-template-columns: 1fr 1fr;
+}
+
+.wallgo-wallbreaker {
+  border-color: #f2c94c;
+  color: #f2c94c;
 }
 
 .wallgo-secondary {
@@ -3010,6 +3087,10 @@ h3 {
 
   .wallgo-start {
     width: 100%;
+  }
+
+  .wallgo-actions {
+    grid-template-columns: 1fr;
   }
 
   .wallgo-walls span {

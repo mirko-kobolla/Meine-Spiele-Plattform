@@ -54,13 +54,10 @@ Beschreibe eine typische Runde in wenigen Schritten:
   - [ ] Lokaler 2-Spieler-Modus an einem Gerät (Pass & Play) sowie Einzelspieler gegen Bot
   - [ ] Kurze, bebilderte Regelübersicht im Spiel
 - **Kann später ergänzt werden:**
-  - [ ] 3- und 4-Spieler-Modus inklusive „Wallbreaker“-Sonderaktion
-  - [ ] Optionaler Zug-Timer (z. B. 60 oder 90 Sekunden pro Zug)
-  - [ ] Online-Mehrspieler-Modus mit Lobby-System
+  - [x] 3- und 4-Spieler-Modus inklusive „Wallbreaker“-Sonderaktion
+  - [x] Optionaler Zug-Timer (z. B. 60 oder 90 Sekunden pro Zug)
 - **Gehört ausdrücklich nicht zur ersten Version:**
   - [ ] Live-Punkteanzeige während der laufenden Partie
-  - [ ] Ranglisten-Systeme, Accounts oder Chat-Funktionen
-  - [ ] Kampagnen-Modus oder tägliche Rätsel-Herausforderungen
 
 #### Technische und Plattform-Notizen
 
